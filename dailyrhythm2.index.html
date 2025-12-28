@@ -261,8 +261,16 @@
     { id: "plenty", label: "🌳 Plenty" },
   ];
 
-  const DEFAULT_OCCASIONALS = [
-    "Laundry","Change sheets","Wash hair","Clean bathroom","Car wash","Grooming"
+     const DEFAULT_OCCASIONALS = [
+    "Laundry",
+    "Change sheets",
+    "Wash hair",
+    "Clean bathroom",
+    "Car wash",
+    "Brows",
+    "Toes",
+    "Cooking / meal prep",
+    "Social time"
   ].map(name => ({ id: uid(), name, lastTended: null }));
 
   const LS = {
@@ -520,6 +528,15 @@
         <div class="tiny" style="margin-bottom:6px">Guiding note</div>
         Side paths aren’t detours. If you have a little extra energy, you can tend one thing — not to catch up, just because it’s there.
       </div>
+        ${sideQuestMenu.length ? `
+          <div style="margin-top:10px">
+            <div class="tiny">Side paths</div>
+            <ul>
+              ${sideQuestMenu.map(x => `<li>${escapeHtml(x)}</li>`).join("")}
+            </ul>
+          </div>
+        ` : ``}
+
     `;
 
     if(state.tend.active){
@@ -572,22 +589,32 @@
       `;
     }
 
-    if(state.stage === "growing"){
-      if(state.energy==="low"){
-        stageContent = `<div style="font-size:18px; color:#44403c">Nothing is missing.</div>`;
-      } else {
-        stageContent = `
-          <div class="sub" style="color:#44403c">
-            ${state.energy==="some" ? "If you want, one small thing could fit." : "There’s room to tend more, if it feels kind."}
-          </div>
-          <ul>
-            <li>Focus on one thing</li>
-            <li>Learn or explore something interesting</li>
-            <li>Tend one small area of life</li>
-          </ul>
-        `;
-      }
-    }
+   if(state.stage === "growing"){
+  if(state.energy==="low"){
+    stageContent = `<div style="font-size:18px; color:#44403c">Nothing is missing.</div>`;
+  } else {
+    const cookLine = state.energy === "plenty"
+      ? "Cook something nourishing (or prep 1–2 things for future you)"
+      : "Cook something simple (or choose an easy meal)";
+
+    const socialLine = state.energy === "plenty"
+      ? "Social time (café, quick outing, call someone you like)"
+      : "Social time (text a friend, short call, sit at a café)";
+
+    stageContent = `
+      <div class="sub" style="color:#44403c">
+        ${state.energy==="some" ? "If you want, one small thing could fit." : "There’s room to tend more, if it feels kind."}
+      </div>
+      <ul>
+        <li>Focus on one thing</li>
+        <li>${escapeHtml(cookLine)}</li>
+        <li>${escapeHtml(socialLine)}</li>
+        <li>Learn or explore something interesting</li>
+        <li>Tend one small area of life</li>
+      </ul>
+    `;
+  }
+}
 
     if(state.stage === "evening"){
       stageContent = `
@@ -621,6 +648,22 @@
     ` : "";
 
     // Gentle resurfacing
+    const sideQuestMenu = (() => {
+      if(state.energy === "low") return [];
+      if(state.energy === "some") {
+        return [
+          "Cook: something simple (10–20 min)",
+          "Social: low-pressure touch (text/call/café)",
+          "Admin: one tiny sweep (5 min)"
+        ];
+      }
+      return [
+        "Cook: nourishing meal or quick prep",
+        "Social: be around people (café/outting/call)",
+        "Admin: one contained task (15–30 min)"
+      ];
+    })();
+
     const extraBlock = (canSuggestExtra() && (heldList.length>0 || occ)) ? `
       <div class="mutebox">
         <div style="font-size:14px; color:#44403c">Something you held earlier could fit here.</div>
