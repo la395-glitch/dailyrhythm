@@ -1,3 +1,712 @@
+    const nav = `
+      <div class="row" style="justify-content:space-between; gap:12px">
+        <div>
+          <div class="tiny">Current stage</div>
+          <div style="font-size:26px; font-weight:650; letter-spacing:-.01em">${escapeHtml(stage.title)}</div>
+          <div class="sub">${escapeHtml(stage.subtitle)}</div>
+        </div>
+        <div class="row" style="align-items:flex-start">
+          <button class="btn soft" data-act="prev">Back</button>
+          <button class="btn soft" data-act="next">Next</button>
+        </div>
+      </div>
+    `;
+
+    const sideQuestMenu = (() => {
+      if(state.energy === "low") return [];
+      if(state.energy === "some") {
+        return [
+          "Cook: something simple (10–20 min)",
+          "Social: low-pressure touch (text/call/café)",
+          "Admin: one tiny sweep (5 min)"
+        ];
+      }
+      return [
+        "Cook: nourishing meal or quick prep",
+        "Social: be around people (café/outing/call)",
+        "Admin: one contained task (15–30 min)"
+      ];
+    })();
+
+    const guiding = `
+      <div class="notice">
+        <div class="tiny" style="margin-bottom:6px">Guiding note</div>
+        Side paths aren’t detours. If you have a little extra energy, you can tend one thing — not to catch up, just because it’s there.
+        ${sideQuestMenu.length ? `
+          <div style="margin-top:10px">
+            <div class="tiny">Side paths</div>
+            <ul>
+              ${sideQuestMenu.map(x => `<li>${escapeHtml(x)}</li>`).join("")}
+            </ul>
+          </div>
+        ` : ``}
+      </div>
+    `;!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Daily Rhythm</title>
+  <style>
+    :root{
+      --bg: #fafaf9;         /* stone-50 */
+      --card: #ffffff;
+      --muted: #78716c;      /* stone-500/600 */
+      --text: #1c1917;       /* stone-900 */
+      --border: #e7e5e4;     /* stone-200 */
+      --soft: #f5f5f4;       /* stone-100 */
+      --soft2:#fafaf9;
+      --accent:#2563eb;      /* blue-600 */
+      --accentSoft:#eff6ff;  /* blue-50 */
+      --shadow: 0 1px 0 rgba(0,0,0,.02);
+      --radius: 18px;
+      --radius2: 14px;
+      --font: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family:var(--font);
+      background:var(--bg);
+      color:var(--text);
+      line-height:1.35;
+    }
+    .wrap{
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 18px;
+    }
+    .grid{
+      display:grid;
+      grid-template-columns: 340px 1fr;
+      gap:16px;
+    }
+    @media (max-width: 920px){
+      .grid{grid-template-columns: 1fr}
+    }
+    .card{
+      background:var(--card);
+      border:1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+    }
+    .pad{padding:16px}
+    .title{font-size: 26px; font-weight: 650; letter-spacing:-.01em}
+    .sub{color:var(--muted); font-size: 14px; margin-top:2px}
+    .tiny{color:var(--muted); font-size: 12px}
+    .row{display:flex; gap:10px; align-items:center}
+    .col{display:flex; flex-direction:column; gap:10px}
+    .btn{
+      appearance:none;
+      border:1px solid var(--border);
+      background:var(--card);
+      padding: 10px 12px;
+      border-radius: 14px;
+      font-size: 14px;
+      cursor:pointer;
+      transition: transform .02s ease, background .2s ease, border-color .2s ease;
+      text-align:left;
+    }
+    .btn:active{transform: scale(.99)}
+    .btn.primary{
+      background: var(--accent);
+      color:white;
+      border-color: var(--accent);
+      text-align:center;
+      font-weight:600;
+    }
+    .btn.soft{
+      background: var(--soft);
+      border-color: var(--border);
+    }
+    .btn.selected{
+      border-color: var(--accent);
+      background: var(--accentSoft);
+    }
+    .btn:disabled{
+      opacity:.5;
+      cursor:not-allowed;
+    }
+    .pillGrid{
+      display:grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+    }
+    .stageMap{
+      display:flex;
+      flex-direction:column;
+      gap:8px;
+    }
+    .stageItem{
+      padding: 10px 12px;
+      border-radius: 14px;
+      border:1px solid var(--border);
+      background:var(--card);
+      cursor:pointer;
+      text-align:left;
+    }
+    .stageItem.active{
+      border-color: var(--accent);
+      background: var(--accentSoft);
+    }
+    .stageItem.past{
+      color: var(--muted);
+      background: var(--soft2);
+    }
+    .stageItem .h{font-weight:650; font-size:14px}
+    .stageItem .d{font-size:12px; color:var(--muted); margin-top:2px}
+    .divider{height:1px; background:var(--border); margin:10px 0}
+    ul{margin:8px 0 0 18px; padding:0}
+    li{margin:6px 0; color:#44403c}
+    .notice{
+      background: var(--soft);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 12px;
+      color:#44403c;
+      font-size: 14px;
+    }
+    .mutebox{
+      border:1px solid var(--border);
+      background:var(--soft2);
+      border-radius: 14px;
+      padding: 12px;
+    }
+    input, textarea{
+      width:100%;
+      border:1px solid var(--border);
+      border-radius: 14px;
+      padding: 10px 12px;
+      font-family:var(--font);
+      font-size: 14px;
+      background: var(--card);
+    }
+    textarea{min-height: 110px; resize: vertical}
+    .two{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+    @media (max-width: 640px){
+      .two{grid-template-columns: 1fr}
+    }
+    .ringWrap{
+      display:flex;
+      justify-content:center;
+      margin-top: 12px;
+    }
+    .footerNote{
+      margin-top: 12px;
+      border:1px solid var(--border);
+      border-radius: var(--radius);
+      background:var(--card);
+      padding: 14px 16px;
+      font-size: 14px;
+      color:#44403c;
+    }
+    .list{
+      display:flex;
+      flex-direction:column;
+      gap:8px;
+    }
+    .listItem{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:10px;
+      padding: 10px 12px;
+      border-radius: 14px;
+      border:1px solid var(--border);
+      background: var(--soft2);
+    }
+    .listItem .t{font-size:14px}
+    .listItem .meta{font-size:12px; color:var(--muted)}
+    .tag{
+      font-size:12px;
+      color: var(--muted);
+    }
+    .rightActions{
+      display:flex; gap:8px; align-items:center;
+    }
+    .kbd{
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      font-size: 12px;
+      color: var(--muted);
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="grid">
+      <!-- LEFT -->
+      <div class="col">
+        <div class="card pad">
+          <div class="title">Daily Rhythm</div>
+          <div class="sub">A gentle way to tend the day.</div>
+
+          <div class="ringWrap" id="ring"></div>
+
+          <div style="margin-top:12px">
+            <div class="tiny" style="margin-bottom:8px">Energy right now</div>
+            <div class="pillGrid" id="energy"></div>
+            <div class="tiny" style="margin-top:8px">
+              This doesn’t decide anything. It just changes what fits.
+            </div>
+          </div>
+
+          <div class="divider"></div>
+
+          <div class="row">
+            <button class="btn soft" id="toggleOcc">Things I tend occasionally</button>
+          </div>
+        </div>
+
+        <div class="card pad" id="stageMapWrap">
+          <div class="tiny" style="margin-bottom:8px">Map</div>
+          <div class="stageMap" id="stageMap"></div>
+        </div>
+      </div>
+
+      <!-- RIGHT -->
+      <div class="col">
+        <div class="card pad" id="occasionalsCard" style="display:none">
+          <div class="row" style="justify-content:space-between; align-items:baseline">
+            <div>
+              <div style="font-size:18px; font-weight:650">Things I tend occasionally</div>
+              <div class="sub">Memory support. No rules.</div>
+            </div>
+            <button class="btn soft" id="closeOcc">Close</button>
+          </div>
+          <div class="divider"></div>
+          <div class="list" id="occasionalsList"></div>
+        </div>
+
+        <div class="card pad" id="mainCard"></div>
+
+        <div class="footerNote">
+          If you end today able to say <b>“I tended what I could.”</b> — it counts.
+        </div>
+      </div>
+    </div>
+  </div>
+
+<script>
+(function(){
+  const STAGES = [
+    { id: "morning", title: "Morning Ground", subtitle: "Arrive gently." },
+    { id: "growing", title: "Growing Hours", subtitle: "Energy sometimes shows up here. Today decides." },
+    { id: "evening", title: "Evening Tending", subtitle: "Close the day with care." },
+  ];
+
+  const ENERGY = [
+    { id: "low", label: "🌱 Low" },
+    { id: "some", label: "🌿 Some" },
+    { id: "plenty", label: "🌳 Plenty" },
+  ];
+
+     const DEFAULT_OCCASIONALS = [
+    "Laundry",
+    "Change sheets",
+    "Wash hair",
+    "Clean bathroom",
+    "Car wash",
+    "Brows",
+    "Toes",
+    "Cooking / meal prep",
+    "Social time"
+  ].map(name => ({ id: uid(), name, lastTended: null }));
+
+  const LS = {
+    stage: "rhythm.stage",
+    energy: "rhythm.energy",
+    held: "rhythm.held",
+    occasional: "rhythm.occasional",
+    reflection: (k)=>`rhythm.reflection.${k}`,
+    seed: (k)=>`rhythm.seed.${k}`,
+  };
+
+  function uid(){ return Math.random().toString(36).slice(2)+Date.now().toString(36); }
+
+  function safeGet(k){
+    try{ return localStorage.getItem(k); }catch(e){ return null; }
+  }
+  function safeSet(k,v){
+    try{ localStorage.setItem(k,v); }catch(e){ /* ignore */ }
+  }
+  function dateKey(d=new Date()){
+    const y=d.getFullYear();
+    const m=String(d.getMonth()+1).padStart(2,"0");
+    const day=String(d.getDate()).padStart(2,"0");
+    return `${y}-${m}-${day}`;
+  }
+  function yesterdayKey(){
+    const d=new Date();
+    d.setDate(d.getDate()-1);
+    return dateKey(d);
+  }
+  function daysAgo(ts){
+    if(!ts) return "—";
+    const diff = Date.now() - ts;
+    const days = Math.floor(diff / (24*60*60*1000));
+    if(days<=0) return "today";
+    if(days===1) return "1 day ago";
+    return `${days} days ago`;
+  }
+
+  // State
+  let state = {
+    stage: (safeGet(LS.stage) || "morning"),
+    energy: (safeGet(LS.energy) || "low"),
+    held: [],
+    heldDraft: "",
+    tend: { active:false, weight:null, upgradesUsed:0 },
+    showOcc: false,
+    occasionals: [],
+    dateKey: dateKey(),
+    reflection: "",
+    seed: "",
+  };
+
+  // Load persisted arrays
+  state.held = loadJSON(LS.held, []);
+  state.occasionals = loadJSON(LS.occasional, null) || DEFAULT_OCCASIONALS;
+
+  // Load today's fields
+  state.reflection = safeGet(LS.reflection(state.dateKey)) || "";
+  state.seed = safeGet(LS.seed(state.dateKey)) || "";
+
+  // Keep dateKey fresh
+  setInterval(()=>{
+    const dk = dateKey();
+    if(dk !== state.dateKey){
+      state.dateKey = dk;
+      state.reflection = safeGet(LS.reflection(dk)) || "";
+      state.seed = safeGet(LS.seed(dk)) || "";
+      render();
+    }
+  }, 30000);
+
+  function loadJSON(key, fallback){
+    const raw = safeGet(key);
+    if(!raw) return fallback;
+    try{ return JSON.parse(raw); }catch{ return fallback; }
+  }
+
+  function persist(){
+    safeSet(LS.stage, state.stage);
+    safeSet(LS.energy, state.energy);
+    safeSet(LS.held, JSON.stringify(state.held));
+    safeSet(LS.occasional, JSON.stringify(state.occasionals));
+    safeSet(LS.reflection(state.dateKey), state.reflection);
+    safeSet(LS.seed(state.dateKey), state.seed);
+  }
+
+  // UI refs
+  const elEnergy = document.getElementById("energy");
+  const elStageMap = document.getElementById("stageMap");
+  const elRing = document.getElementById("ring");
+  const elMain = document.getElementById("mainCard");
+  const elOccCard = document.getElementById("occasionalsCard");
+  const elOccList = document.getElementById("occasionalsList");
+  const btnToggleOcc = document.getElementById("toggleOcc");
+  const btnCloseOcc = document.getElementById("closeOcc");
+
+  btnToggleOcc.addEventListener("click", ()=>{
+    state.showOcc = true;
+    render();
+  });
+  btnCloseOcc.addEventListener("click", ()=>{
+    state.showOcc = false;
+    render();
+  });
+
+  function setStage(id){
+    state.stage = id;
+    state.tend = { active:false, weight:null, upgradesUsed:0 };
+    persist(); render();
+  }
+  function setEnergy(id){
+    state.energy = id;
+    persist(); render();
+  }
+
+  function startTending(weight){
+    if(weight === "heavy" && state.energy !== "plenty") return;
+    state.tend = { active:true, weight, upgradesUsed:0 };
+    persist(); render();
+  }
+  function stopTending(){
+    state.tend = { active:false, weight:null, upgradesUsed:0 };
+    persist(); render();
+  }
+  function upgradeTending(){
+    if(!state.tend.active) return;
+    if(state.tend.upgradesUsed >= 1) return;
+    state.tend.upgradesUsed += 1;
+    persist(); render();
+  }
+
+  function addHeld(){
+    const text = state.heldDraft.trim();
+    if(!text) return;
+    state.held.unshift({ id: uid(), text, createdAt: Date.now(), done:false });
+    state.heldDraft = "";
+    persist(); render();
+  }
+  function releaseHeld(id){
+    state.held = state.held.map(h => h.id===id ? ({...h, done:true}) : h);
+    persist(); render();
+  }
+
+  function markOccasional(id){
+    state.occasionals = state.occasionals.map(o => o.id===id ? ({...o, lastTended: Date.now()}) : o);
+    persist(); render();
+  }
+
+  function ringPct(){
+    const idx = STAGES.findIndex(s=>s.id===state.stage);
+    if(idx<=0) return 0.18;
+    if(idx===1) return 0.55;
+    return 0.92;
+  }
+
+  function suggestOccasional(){
+    const sorted = [...state.occasionals].sort((a,b)=>(a.lastTended||0)-(b.lastTended||0));
+    return sorted[0] || null;
+  }
+
+  function visibleHeld(){
+    return state.held.filter(h=>!h.done);
+  }
+
+  function canSuggestExtra(){
+    if(state.energy === "low") return false;
+    if(state.stage === "growing") return true;
+    if(state.stage === "evening") return true;
+    return false;
+  }
+
+  function showTendOneThing(){
+    if(state.energy === "low") return false;
+    if(state.stage === "growing") return true;
+    if(state.stage === "evening") return true;
+    if(state.stage === "morning") return true;
+    return false;
+  }
+
+  function render(){
+    // Energy toggles
+    elEnergy.innerHTML = "";
+    ENERGY.forEach(e=>{
+      const b = document.createElement("button");
+      b.className = "btn" + (state.energy===e.id ? " selected":"");
+      b.textContent = e.label;
+      b.addEventListener("click", ()=>setEnergy(e.id));
+      elEnergy.appendChild(b);
+    });
+
+    // Stage map
+    elStageMap.innerHTML = "";
+    const stageIdx = STAGES.findIndex(s=>s.id===state.stage);
+    STAGES.forEach((s, idx)=>{
+      const item = document.createElement("button");
+      item.className = "stageItem" + (s.id===state.stage ? " active":"") + (idx < stageIdx ? " past":"");
+      item.innerHTML = `<div class="h">${escapeHtml(s.title)}</div><div class="d">${escapeHtml(s.subtitle)}</div>`;
+      item.addEventListener("click", ()=>setStage(s.id));
+      elStageMap.appendChild(item);
+    });
+
+    // Ring
+    elRing.innerHTML = ringSVG(ringPct());
+
+    // Occasionals
+    elOccCard.style.display = state.showOcc ? "block" : "none";
+    if(state.showOcc){
+      elOccList.innerHTML = "";
+      state.occasionals.forEach(o=>{
+        const row = document.createElement("div");
+        row.className = "listItem";
+        const left = document.createElement("div");
+        left.innerHTML = `<div class="t">${escapeHtml(o.name)}</div><div class="meta">Last tended: ${escapeHtml(daysAgo(o.lastTended))}</div>`;
+        const right = document.createElement("div");
+        right.className = "rightActions";
+        const btn = document.createElement("button");
+        btn.className = "btn soft";
+        btn.textContent = "Mark tended";
+        btn.addEventListener("click", ()=>markOccasional(o.id));
+        right.appendChild(btn);
+        row.appendChild(left);
+        row.appendChild(right);
+        elOccList.appendChild(row);
+      });
+    }
+
+    // Main card
+    elMain.innerHTML = mainCardHTML();
+    wireMainCardHandlers();
+  }
+
+  function mainCardHTML(){
+    const stage = STAGES.find(s=>s.id===state.stage) || STAGES[0];
+    const heldList = visibleHeld();
+    const occ = suggestOccasional();
+    const fromYesterday = (safeGet(LS.seed(yesterdayKey())) || "").trim();
+
+    const nav = `
+      <div class="row" style="justify-content:space-between; gap:12px">
+        <div>
+          <div class="tiny">Current stage</div>
+          <div style="font-size:26px; font-weight:650; letter-spacing:-.01em">${escapeHtml(stage.title)}</div>
+          <div class="sub">${escapeHtml(stage.subtitle)}</div>
+        </div>
+        <div class="row" style="align-items:flex-start">
+          <button class="btn soft" data-act="prev">Back</button>
+          <button class="btn soft" data-act="next">Next</button>
+        </div>
+      </div>
+    `;
+        ${sideQuestMenu.length ? `
+          <div style="margin-top:10px">
+            <div class="tiny">Side paths</div>
+            <ul>
+              ${sideQuestMenu.map(x => `<li>${escapeHtml(x)}</li>`).join("")}
+            </ul>
+          </div>
+    const guiding = `
+      <div class="notice">
+        <div class="tiny" style="margin-bottom:6px">Guiding note</div>
+        Side paths aren’t detours. If you have a little extra energy, you can tend one thing — not to catch up, just because it’s there.
+      </div>
+
+        ` : ``}
+
+    `;
+
+    if(state.tend.active){
+      const examples = {
+        light: ["Wipe one counter","File nails","Put away a small pile","Rinse a few dishes"],
+        medium:["One load of laundry","Change sheets","Wash hair","Do eyebrows"],
+        heavy: ["Deep clean one zone","Car wash + quick inside","Big admin task","Declutter session"],
+      }[state.tend.weight] || [];
+      return `
+        ${nav}
+        ${guiding}
+        <div class="mutebox">
+          <div style="font-size:18px; font-weight:650">Tending in progress</div>
+          <div class="sub">You chose to tend one thing.</div>
+          <div style="margin-top:10px; font-size:14px">Weight: <b>${capitalize(state.tend.weight)}</b></div>
+          <div style="margin-top:8px; font-size:14px">
+            Examples that fit:
+            <ul>${examples.slice(0,3).map(x=>`<li>${escapeHtml(x)}</li>`).join("")}</ul>
+          </div>
+
+          <div class="divider"></div>
+          <div style="font-size:14px">Spend more energy, or stop here?</div>
+          <div class="row" style="margin-top:10px">
+            <button class="btn soft" data-act="upgrade" ${state.tend.upgradesUsed>=1 ? "disabled":""}>Spend more energy</button>
+            <button class="btn primary" data-act="stop">Enough for now</button>
+          </div>
+          <div class="tiny" style="margin-top:10px">
+            Bundling is allowed. Autopilot bundling is what we interrupt.
+          </div>
+          <div class="tiny" style="margin-top:6px">Spending energy buys permission to stop.</div>
+        </div>
+      `;
+    }
+
+    // Stage content (not tending)
+    let stageContent = "";
+
+    if(state.stage === "morning"){
+      stageContent = `
+        <div>
+          <div style="font-weight:650">What would feel supportive right now?</div>
+          <ul>
+            <li>Take meds + water</li>
+            <li>Step outside or open a window</li>
+            <li>Gentle movement (walk, stretch, yoga)</li>
+            <li>Coffee and food when ready</li>
+          </ul>
+          ${state.energy==="low" ? `<div class="sub" style="margin-top:10px">Arrival is enough.</div>` : ``}
+        </div>
+      `;
+    }
+
+   if(state.stage === "growing"){
+  if(state.energy==="low"){
+    stageContent = `<div style="font-size:18px; color:#44403c">Nothing is missing.</div>`;
+  } else {
+    const cookLine = state.energy === "plenty"
+      ? "Cook something nourishing (or prep 1–2 things for future you)"
+      : "Cook something simple (or choose an easy meal)";
+
+    const socialLine = state.energy === "plenty"
+      ? "Social time (café, quick outing, call someone you like)"
+      : "Social time (text a friend, short call, sit at a café)";
+
+    stageContent = `
+      <div class="sub" style="color:#44403c">
+        ${state.energy==="some" ? "If you want, one small thing could fit." : "There’s room to tend more, if it feels kind."}
+      </div>
+      <ul>
+        <li>Focus on one thing</li>
+        <li>${escapeHtml(cookLine)}</li>
+        <li>${escapeHtml(socialLine)}</li>
+        <li>Learn or explore something interesting</li>
+        <li>Tend one small area of life</li>
+      </ul>
+    `;
+  }
+}
+
+    if(state.stage === "evening"){
+      stageContent = `
+        <div class="col" style="gap:10px">
+          <div style="font-weight:650">I’m someone who values ________, so today I ________.</div>
+          <textarea id="reflection" placeholder="This is about noticing, not judging.">${escapeHtml(state.reflection)}</textarea>
+          <div style="font-weight:650">Seed for tomorrow</div>
+          <input id="seed" placeholder="One small seed, if any. Something ready when you are." value="${escapeAttr(state.seed)}" />
+          ${fromYesterday ? `
+            <div>
+              <div class="tiny">From yesterday</div>
+              <div style="margin-top:6px; font-size:14px; color:#44403c">${escapeHtml(fromYesterday)}</div>
+            </div>
+          ` : ``}
+          <div class="tiny">Anything not done today is held.</div>
+        </div>
+      `;
+    }
+
+    // Tend one thing (energy gated)
+    const tendBlock = (showTendOneThing()) ? `
+      <div class="mutebox">
+        <div style="font-weight:650">Tend one thing (5–15 minutes)</div>
+        <div class="tiny" style="margin-top:6px">One choice. Stopping is allowed.</div>
+        <div class="pillGrid" style="margin-top:10px">
+          <button class="btn soft" data-act="tend-light">Light</button>
+          <button class="btn soft" data-act="tend-medium">Medium</button>
+          <button class="btn soft" data-act="tend-heavy" ${state.energy!=="plenty" ? "disabled":""}>Heavy</button>
+        </div>
+      </div>
+    ` : "";
+
+    // Gentle resurfacing
+    const sideQuestMenu = (() => {
+      if(state.energy === "low") return [];
+      if(state.energy === "some") {
+        return [
+          "Cook: something simple (10–20 min)",
+          "Social: low-pressure touch (text/call/café)",
+          "Admin: one tiny sweep (5 min)"
+        ];
+      }
+      return [
+        "Cook: nourishing meal or quick prep",
+        "Social: be around people (café/outting/call)",
+        "Admin: one contained task (15–30 min)"
+      ];
+    })();
+
 <!doctype html>
 <html lang="en">
 <head>
@@ -686,6 +1395,142 @@
         <div class="tiny" style="margin-top:10px">You can leave it held.</div>
       </div>
     ` : "";
+
+    // Hold for later
+    const holdBlock = `
+      <div class="mutebox">
+        <div style="font-weight:650">Hold this for another day</div>
+        <div class="row" style="margin-top:10px">
+          <input id="heldDraft" placeholder="For things that matter, but not today." value="${escapeAttr(state.heldDraft)}" />
+          <button class="btn primary" data-act="add-held" style="min-width:100px">Hold</button>
+        </div>
+        ${heldList.length ? `
+          <div class="divider"></div>
+          <div class="list">
+            ${heldList.slice(0,5).map(h=>`
+              <div class="listItem">
+                <div>
+                  <div class="t">${escapeHtml(h.text)}</div>
+                  <div class="meta">${new Date(h.createdAt).toLocaleString()}</div>
+                </div>
+                <button class="btn soft" data-act="release-held" data-id="${escapeAttr(h.id)}">Release</button>
+              </div>
+            `).join("")}
+            ${heldList.length>5 ? `<div class="tiny">Showing 5. (The rest is still held.)</div>` : ``}
+          </div>
+        ` : ``}
+      </div>
+    `;
+
+    return `
+      ${nav}
+      ${guiding}
+      ${stageContent}
+      ${tendBlock}
+      ${extraBlock}
+      ${holdBlock}
+    `;
+  }
+
+  function wireMainCardHandlers(){
+    // nav
+    const prev = elMain.querySelector('[data-act="prev"]');
+    const next = elMain.querySelector('[data-act="next"]');
+    if(prev) prev.addEventListener("click", ()=>{
+      const idx = STAGES.findIndex(s=>s.id===state.stage);
+      setStage(STAGES[Math.max(0, idx-1)].id);
+    });
+    if(next) next.addEventListener("click", ()=>{
+      const idx = STAGES.findIndex(s=>s.id===state.stage);
+      setStage(STAGES[Math.min(STAGES.length-1, idx+1)].id);
+    });
+
+    // reflection/seed
+    const ref = elMain.querySelector('#reflection');
+    if(ref){
+      ref.addEventListener("input", (e)=>{
+        state.reflection = e.target.value || "";
+        persist();
+      });
+    }
+    const seed = elMain.querySelector('#seed');
+    if(seed){
+      seed.addEventListener("input", (e)=>{
+        state.seed = e.target.value || "";
+        persist();
+      });
+    }
+
+    // held draft
+    const heldDraft = elMain.querySelector('#heldDraft');
+    if(heldDraft){
+      heldDraft.addEventListener("input", (e)=>{
+        state.heldDraft = e.target.value || "";
+      });
+      heldDraft.addEventListener("keydown", (e)=>{
+        if(e.key === "Enter"){
+          e.preventDefault();
+          addHeld();
+        }
+      });
+    }
+
+    // actions (delegate)
+    elMain.querySelectorAll("[data-act]").forEach(node=>{
+      node.addEventListener("click", ()=>{
+        const act = node.getAttribute("data-act");
+        const id = node.getAttribute("data-id");
+        if(act === "add-held") return addHeld();
+        if(act === "release-held" && id) return releaseHeld(id);
+        if(act === "mark-occ" && id) return markOccasional(id);
+        if(act === "tend-light") return startTending("light");
+        if(act === "tend-medium") return startTending("medium");
+        if(act === "tend-heavy") return startTending("heavy");
+        if(act === "stop") return stopTending();
+        if(act === "upgrade") return upgradeTending();
+      });
+    });
+  }
+
+  function ringSVG(pct){
+    const r = 44;
+    const c = 2*Math.PI*r;
+    const off = (1-pct)*c;
+    return `
+      <svg width="120" height="120" viewBox="0 0 120 120" aria-label="day unfolding">
+        <circle cx="60" cy="60" r="${r}" stroke="#e7e5e4" stroke-width="10" fill="none"></circle>
+        <circle cx="60" cy="60" r="${r}" stroke="#2563eb" stroke-width="10" fill="none"
+          stroke-dasharray="${c}" stroke-dashoffset="${off}" stroke-linecap="round"
+          transform="rotate(-90 60 60)"></circle>
+        <text x="60" y="64" text-anchor="middle" font-size="12" fill="#78716c">Day unfolding</text>
+      </svg>
+    `;
+  }
+
+  function escapeHtml(s){
+    return String(s ?? "")
+      .replaceAll("&","&amp;")
+      .replaceAll("<","&lt;")
+      .replaceAll(">","&gt;")
+      .replaceAll('"',"&quot;")
+      .replaceAll("'","&#039;");
+  }
+  function escapeAttr(s){
+    return escapeHtml(s).replaceAll("\n"," ");
+  }
+  function capitalize(s){
+    if(!s) return "";
+    return s.charAt(0).toUpperCase()+s.slice(1);
+  }
+
+  // First render
+  persist();
+  render();
+})();
+</script>
+</body>
+</html>
+
 
     // Hold for later
     const holdBlock = `
